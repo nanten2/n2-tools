@@ -1,6 +1,6 @@
 
 import n2.cache
-from. import funcs
+from . import funcs
 
 import os
 import io
@@ -50,8 +50,9 @@ def use_cache_if_exists(func):
         except FileNotFoundError:
             pass
     
-        kwargs['key'] = new_key
-        return func(*args, **kwargs)
+        new_hdu = func(*args, **kwargs)
+        new_fimage = fitsimage(new_hdu, new_key)
+        return new_fimage
     
     return wrapper
 
@@ -88,26 +89,27 @@ class fitsimage(object):
         return
         
     @use_cache_if_exists
-    def _testfunc_zero(self, key=''):
+    def _testfunc_zero(self):
         new_hdu = self.hdu.copy()
         new_hdu.data *= 0
-        new_fimage = fitsimage(new_hdu, key)
-        return new_fimage
+        return new_hdu
     
     @use_cache_if_exists
     def _testfunc_many_args(self, a=0, b=0, c=0, d=0, e=0, f=0, g=0, h=0, i=0,
-                            j=0, k=0, l=0, m=0, n=0, o=0, p=0, q=0, r=0, s=0,
-                            key=''):
+                            j=0, k=0, l=0, m=0, n=0, o=0, p=0, q=0, r=0, s=0):
         new_hdu = self.hdu.copy()
         new_hdu.data = (new_hdu.data * 0) + 1
-        new_fimage = fitsimage(new_hdu, key)
-        return new_fimage
+        return new_hdu
     
     @use_cache_if_exists
-    def cut_pix(self, x=None, y=None, z=None, key=''):
+    def cut_pix(self, x=None, y=None, z=None):
         new_hdu = funcs.cut_pix(self.hdu, x, y, z)
-        new_fimage = fitsimage(new_hdu, key)
-        return new_fimage
+        return new_hdu
+        
+    @use_cache_if_exists
+    def cut_world(self, x=None, y=None, z=None):
+        new_hdu = funcs.cut_world(self.hdu, x, y, z)
+        return new_hdu
         
         
 
@@ -115,3 +117,5 @@ class fitsimage(object):
 
 
 __all__ = ['open', 'open_cache_file', 'fitsimage']
+
+
