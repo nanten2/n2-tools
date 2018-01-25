@@ -118,10 +118,8 @@ def cut_world_2d(hdu, x=None, y=None):
         w_x0 = w_bottom_left[0]
         w_x1 = w_top_right[0]
     else:
-        w_x0 = x[0].to(unitx).value if isinstance(x[0], astropy.units.Quantity)\
-               else x[0]
-        w_x1 = x[1].to(unitx).value if isinstance(x[1], astropy.units.Quantity)\
-               else x[1]
+        w_x0 = x[0].to(unitx).value if isinstance(x[0], astropy.units.Quantity) else x[0]
+        w_x1 = x[1].to(unitx).value if isinstance(x[1], astropy.units.Quantity) else x[1]
         pass
     
     if y is None:
