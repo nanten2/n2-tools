@@ -1,36 +1,25 @@
 
-
 import os
+import io
 import shutil
 import hashlib
 
+open_ = open
 
 CACHE_DIR = '.n2cache'
 
 
-def get_cache_dir_path():
-    cwd = os.getcwd()
-    cache_dir = os.path.join(cwd, CACHE_DIR)
-    return cache_dir
-
-
 def make_cache_dir():
-    target = get_cache_dir_path()
-    
-    if os.path.exists(target):
-        return
-    
-    os.makedirs(target)
+    if not os.path.exists(CACHE_DIR):
+        os.makedirs(CACHE_DIR)
+        pass
     return
 
 
 def clean():
-    target = get_cache_dir_path()
-    
-    if not os.path.exists(target):
-        return
-    
-    shutil.rmtree(target)
+    if os.path.exists(CACHE_DIR):
+        shutil.rmtree(CACHE_DIR)
+        pass
     return
 
 
@@ -43,21 +32,30 @@ def hash(key):
     return hash_
 
 
-def exists(key, ext=''):
-    make_cache_dir()
+def getpath(key):
     hash_ = hash(key)
-    target_dir = get_cache_dir_path()
-    target = os.path.join(target_dir, hash_) + ext
-    return os.path.exists(target)
-
-
-def get_path(key, ext=''):
-    make_cache_dir()
-    hash_ = hash(key)
-    target_dir = get_cache_dir_path()
-    target = os.path.join(target_dir, hash_) + ext
+    target = os.path.join(CACHE_DIR, hash_)
     return target
 
 
-__all__ = ['CACHE_DIR', 'clean',
-           'hash', 'exists', 'get_path']
+def open(key):
+    target = getpath(key)
+    with open_(target, 'rb') as f:
+        io_ = io.BytesIO(f.read())
+        pass
+    io_.seek(0)
+    return io_
+
+
+def save(key, io_):
+    target = getpath(key)
+    make_cache_dir()
+    with open_(target, 'wb') as f:
+        io_.seek(0)
+        f.write(io_.read())
+        pass
+    return
+
+
+
+__all__ = ['CACHE_DIR', 'clean', 'hash', 'open', 'save']

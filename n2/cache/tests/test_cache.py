@@ -2,79 +2,54 @@
 import unittest
 
 import os
-import cache
+import io
+import n2.cache
 
 class TestCache(unittest.TestCase):
     def setUp(self):
-        cache.clean()
+        n2.cache.clean()
         return
         
     def tearDown(self):
-        cache.clean()
+        n2.cache.clean()
         return
     
-    def test_make_cache_dir(self):
-        cache.make_cache_dir()
-        cache_dir_path = cache.get_cache_dir_path()
-        ret = os.path.exists(cache_dir_path)
-        self.assertTrue(ret)
-        return
-        
     def test_clean(self):
-        cache.clean()
-        cache_dir_path = cache.get_cache_dir_path()
-        ret = os.path.exists(cache_dir_path)
+        n2.cache.clean()
+        ret = os.path.exists(n2.cache.CACHE_DIR)
         self.assertFalse(ret)
         return
         
     def test_hash(self):
         d1 = '1234567890'
         h1 = '01b307acba4f54f55aafc33bb06bbbf6ca803e9a'
-        ret1 = cache.hash(d1)
+        ret1 = n2.cache.hash(d1)
         self.assertEqual(ret1, h1)
         
         d2 = b'\x00' * 4096
         h2 = '1ceaf73df40e531df3bfb26b4fb7cd95fb7bff1d'
-        ret2 = cache.hash(d2)
+        ret2 = n2.cache.hash(d2)
         self.assertEqual(ret2, h2)        
         return
         
-    def test_get_path(self):
-        key1 = 'test_get_path_1'
-        path1 = cache.get_path(key1)
-        with open(path1, 'w') as f:
-            f.write(key1)
-            pass
-        ret1 = os.path.exists(path1)
+    def test_save(self):
+        key1 = 'test_save_1'
+        io1 = io.BytesIO(key1.encode('utf-8'))
+        n2.cache.save(key1, io1)
+        ret1 = os.path.exists(n2.cache.cache.getpath(key1))
         self.assertTrue(ret1)
-        
-        key2 = 'test_get_path_2'
-        ext2 = '.fits'
-        path2 = cache.get_path(key2, ext2)
-        with open(path2, 'w') as f:
-            f.write(key2+ext2)
-            pass
-        ret2 = os.path.exists(path2)
-        self.assertTrue(ret2)
         return
+    
+    def test_open(self):
+        key1 = 'test_open_1'
+        io1 = io.BytesIO(key1.encode('utf-8'))
+        n2.cache.save(key1, io1)
+        io1_2 = n2.cache.open(key1)
+        io1.seek(0)
+        self.assertTrue(io1.read(), io1_2.read())
         
-    def test_exists(self):
-        key1 = 'test_exists_1'
-        path1 = cache.get_path(key1)
-        with open(path1, 'w') as f:
-            f.write(key1)
-            pass
-        ret1 = cache.exists(key1)
-        self.assertTrue(ret1)
-        
-        key2 = 'test_exists_2'
-        ext2 = '.fits'
-        path2 = cache.get_path(key2, ext2)
-        with open(path2, 'w') as f:
-            f.write(key2+ext2)
-            pass
-        ret2 = cache.exists(key2, ext2)
-        self.assertTrue(ret2)
+        key2 = 'test_open_2'
+        self.assertRaises(FileNotFoundError, n2.cache.open, key2)
         return
 
 

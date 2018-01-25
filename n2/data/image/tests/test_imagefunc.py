@@ -1,0 +1,43 @@
+
+import unittest
+import os
+import astropy.io.fits
+
+import n2.data
+import n2.data.image.funcs as funcs
+
+
+class TestDataImageFunc(unittest.TestCase):
+    def setUp(self):
+        self.datadir = os.path.join(n2.data.__path__[0], 'image', 'tests')
+        return
+    
+    def test_cut_pix_2d(self):
+        f = 'fk5_tan_large.fits.gz'
+        p = os.path.join(self.datadir, f)
+        hdu = astropy.io.fits.open(p)[0]
+        
+        hdu2 = funcs.cut_pix_2d(hdu)
+        self.assertEqual((hdu2.data - hdu.data).sum(), 0)
+        
+        hdu3_ = funcs.cut_pix_2d(hdu, [20, 110], [30, 65])
+        try:
+            hdu3_.writeto(p+'.cut3.fits.gz', overwrite=True)
+        except OSError:
+            pass
+        f3 = 'fk5_tan_large.fits.gz.cut3.fits.gz'
+        p3 = os.path.join(self.datadir, f3)
+        hdu3 = astropy.io.fits.open(p3)[0]        
+        self.assertEqual((hdu3_.data - hdu3.data).sum(), 0)
+            
+        hdu4 = funcs.cut_pix_2d(hdu, [20, 110], [30, -35])
+        self.assertEqual((hdu3_.data - hdu4.data).sum(), 0)
+        
+        hdu5 = funcs.cut_pix_2d(hdu, [20, -30], [20, -30])
+        self.assertRaises(ValueError, (lambda:hdu3_.data - hdu5.data))
+        return
+        
+
+
+if __name__=='__main__':
+    unittest.main()
