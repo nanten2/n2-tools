@@ -128,10 +128,8 @@ def cut_world_2d(hdu, x=None, y=None):
         w_y0 = w_bottom_left[1]
         w_y1 = w_top_right[1]
     else:
-        w_y0 = y[0].to(unity).value if isinstance(y[0], astropy.units.Quantity)\
-               else y[0]
-        w_y1 = y[1].to(unity).value if isinstance(y[1], astropy.units.Quantity)\
-               else y[1]
+        w_y0 = y[0].to(unity).value if isinstance(y[0], astropy.units.Quantity) else y[0]
+        w_y1 = y[1].to(unity).value if isinstance(y[1], astropy.units.Quantity) else y[1]
         pass
 
     w0 = [w_x0, w_y0]
@@ -165,30 +163,24 @@ def cut_world_3d(hdu, x=None, y=None, z=None):
         w_x0 = w_bottom_left[0]
         w_x1 = w_top_right[0]
     else:
-        w_x0 = x[0].to(unitx).value if isinstance(x[0], astropy.units.Quantity)\
-               else x[0]
-        w_x1 = x[1].to(unitx).value if isinstance(x[1], astropy.units.Quantity)\
-               else x[1]
+        w_x0 = x[0].to(unitx).value if isinstance(x[0], astropy.units.Quantity) else x[0]
+        w_x1 = x[1].to(unitx).value if isinstance(x[1], astropy.units.Quantity) else x[1]
         pass
     
     if y is None:
         w_y0 = w_bottom_left[1]
         w_y1 = w_top_right[1]
     else:
-        w_y0 = y[0].to(unity).value if isinstance(y[0], astropy.units.Quantity)\
-               else y[0]
-        w_y1 = y[1].to(unity).value if isinstance(y[1], astropy.units.Quantity)\
-               else y[1]
+        w_y0 = y[0].to(unity).value if isinstance(y[0], astropy.units.Quantity) else y[0]
+        w_y1 = y[1].to(unity).value if isinstance(y[1], astropy.units.Quantity) else y[1]
         pass
 
     if z is None:
         w_z0 = w_bottom_left[2]
         w_z1 = w_top_right[2]
     else:
-        w_z0 = z[0].to(unitz).value if isinstance(z[0], astropy.units.Quantity)\
-               else z[0]
-        w_z1 = z[1].to(unitz).value if isinstance(z[1], astropy.units.Quantity)\
-               else z[1]
+        w_z0 = z[0].to(unitz).value if isinstance(z[0], astropy.units.Quantity) else z[0]
+        w_z1 = z[1].to(unitz).value if isinstance(z[1], astropy.units.Quantity) else z[1]
         pass
     
     w0 = [w_x0, w_y0, w_z0]
