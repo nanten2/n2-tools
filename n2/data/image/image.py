@@ -116,6 +116,15 @@ class fitsimage(object):
         new_hdu = funcs.decimate(self.hdu, xy, z)
         return new_hdu
         
+    @use_cache_if_exists
+    def regrid(self, output_header, hdu_in=0, order=u'bilinear',
+               independent_celestial_slices=False):
+        new_hdu = funcs.reproject(self.hdu, output_header,
+                                  hdu_in = hdu_in,
+                                  order = order
+                                  independent_celestial_slices = independent_celestial_slices)
+        return new_hdu
+        
         
 
 

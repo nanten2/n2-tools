@@ -25,7 +25,7 @@ class TestDataImageFunc(unittest.TestCase):
         
         hdu3_ = funcs.cut_pix(hdu, [20, 110], [30, 65])
         try:
-            hdu3_.writeto(p+'.cutp2.fits.gz', overwrite=True)
+            hdu3_.writeto(p+'.cutp2.fits.gz')
         except OSError:
             pass
         f3 = 'fk5_tan_large.fits.gz.cutp2.fits.gz'
@@ -48,7 +48,7 @@ class TestDataImageFunc(unittest.TestCase):
         hdu2 = funcs.cut_world(hdu, [84.3, 83.35]*deg, [-5.2, -4.5]*deg)
         self.assertNotEqual(hdu2.data.sum(), hdu.data.sum())
         try:
-            hdu2.writeto(p+'.cutw2.fits.gz', overwrite=True)
+            hdu2.writeto(p+'.cutw2.fits.gz')
         except OSError:
             pass
         f2 = 'fk5_tan_large.fits.gz.cutw2.fits.gz'
@@ -68,7 +68,7 @@ class TestDataImageFunc(unittest.TestCase):
         hdu2 = funcs.decimate(hdu, xy=1/3)
         self.assertNotEqual(hdu2.data.sum(), hdu.data.sum())
         try:
-            hdu2.writeto(p+'.decimate2.fits.gz', overwrite=True)
+            hdu2.writeto(p+'.decimate2.fits.gz')
         except OSError:
             pass
         f2 = 'fk5_tan_large.fits.gz.decimate2.fits.gz'
@@ -80,6 +80,33 @@ class TestDataImageFunc(unittest.TestCase):
         self.assertRaises(ValueError, (lambda: hdu3.data - hdu.data))
         return
         
+    def test_reproject_2d(self):
+        f1 = 'fk5_tan_large.fits.gz'
+        p1 = os.path.join(self.datadir, f1)
+        hdu1 = astropy.io.fits.open(p1)[0]
+        
+        f2 = 'gal_car_large.fits.gz'
+        p2 = os.path.join(self.datadir, f2)
+        hdu2 = astropy.io.fits.open(p2)[0]
+
+        f3 = 'gal_tan_large.fits.gz'
+        p3 = os.path.join(self.datadir, f3)
+        hdu3 = astropy.io.fits.open(p3)[0]
+        
+        hdu4 = funcs.reproject(hdu1, hdu2.header)
+        self.assertEqual(hdu2.data.shape, hdu4.data.shape)
+        try:
+            hdu4.writeto(p1+'.reproject4.fits.gz')
+        except OSError:
+            pass
+            
+        hdu5 = funcs.reproject(hdu1, hdu3.header)
+        self.assertEqual(hdu3.data.shape, hdu5.data.shape)
+        try:
+            hdu5.writeto(p1+'.reproject5.fits.gz')
+        except OSError:
+            pass            
+        return
 
 if __name__=='__main__':
     unittest.main()

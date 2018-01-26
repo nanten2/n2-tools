@@ -3,6 +3,7 @@ import numpy
 import astropy.io.fits
 import astropy.wcs
 import astropy.units
+import reproject as reproject_
 
 
 def cut_pix(hdu, x=None, y=None, z=None):
@@ -212,7 +213,51 @@ def decimate_z(hdu, fraction):
     return newhdu
 
 
+def reproject(input_hdu, output_header, hdu_in=0, order=u'bilinear',
+              independent_celestial_slices=False):
+    newd, footprint = reproject_.reproject_interp(input_hdu,
+                                                  output_projection = output_header,
+                                                  hdu_in = hdu_in,
+                                                  order = order,
+                                                  independent_celestial_slices = independent_celestial_slices)
     
-__all__ = ['cut_pix', 'cut_world', 'decimate']
+    def copy_record_if_exists(key, writeto, original):
+        if key in original:
+            writeto[key] = original[key]
+            pass
+        return writeto
+
+    
+    newh = input_hdu.header.copy()
+    copy_record_if_exists('NAXIS', newh, output_header)
+    copy_record_if_exists('NAXIS1', newh, output_header)
+    copy_record_if_exists('NAXIS2', newh, output_header)
+    copy_record_if_exists('NAXIS3', newh, output_header)
+    copy_record_if_exists('CRPIX1', newh, output_header)
+    copy_record_if_exists('CRPIX2', newh, output_header)
+    copy_record_if_exists('CRPIX3', newh, output_header)
+    copy_record_if_exists('CRVAL1', newh, output_header)
+    copy_record_if_exists('CRVAL2', newh, output_header)
+    copy_record_if_exists('CRVAL3', newh, output_header)
+    copy_record_if_exists('CDELT1', newh, output_header)
+    copy_record_if_exists('CDELT2', newh, output_header)
+    copy_record_if_exists('CDELT3', newh, output_header)
+    copy_record_if_exists('CD1_1', newh, output_header)
+    copy_record_if_exists('CD1_2', newh, output_header)
+    copy_record_if_exists('CD2_1', newh, output_header)
+    copy_record_if_exists('CD2_2', newh, output_header)
+    copy_record_if_exists('CROTA1', newh, output_header)
+    copy_record_if_exists('CROTA2', newh, output_header)
+    copy_record_if_exists('CTYPE1', newh, output_header)
+    copy_record_if_exists('CTYPE2', newh, output_header)
+    copy_record_if_exists('CTYPE3', newh, output_header)
+    copy_record_if_exists('CUNIT1', newh, output_header)
+    copy_record_if_exists('CUNIT2', newh, output_header)
+    copy_record_if_exists('CUNIT3', newh, output_header)
+    newhdu = astropy.io.fits.PrimaryHDU(newd, newh)
+    return newhdu
+
+    
+__all__ = ['cut_pix', 'cut_world', 'decimate', 'reproject']
 
 
