@@ -121,7 +121,7 @@ class fitsimage(object):
                independent_celestial_slices=False):
         new_hdu = funcs.reproject(self.hdu, output_header,
                                   hdu_in = hdu_in,
-                                  order = order
+                                  order = order,
                                   independent_celestial_slices = independent_celestial_slices)
         return new_hdu
         
