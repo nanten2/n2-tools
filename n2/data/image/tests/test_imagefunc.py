@@ -57,9 +57,28 @@ class TestDataImageFunc(unittest.TestCase):
         self.assertEqual((hdu2.data - hdu2_.data).sum(), 0)
 
         hdu3 = funcs.cut_world(hdu, [84.3, 82.5]*deg, [-5.2, -4.5]*deg)
-        self.assertRaises(ValueError, (lambda:hdu3.data - hdu.data))
+        self.assertRaises(ValueError, (lambda: hdu3.data - hdu.data))
         return
+    
+    def test_decimate_2d(self):
+        f = 'fk5_tan_large.fits.gz'
+        p = os.path.join(self.datadir, f)
+        hdu = astropy.io.fits.open(p)[0]
         
+        hdu2 = funcs.decimate(hdu, xy=1/3)
+        self.assertNotEqual(hdu2.data.sum(), hdu.data.sum())
+        try:
+            hdu2.writeto(p+'.decimate2.fits.gz', overwrite=True)
+        except OSError:
+            pass
+        f2 = 'fk5_tan_large.fits.gz.decimate2.fits.gz'
+        p2 = os.path.join(self.datadir, f2)
+        hdu2_ = astropy.io.fits.open(p2)[0]        
+        self.assertEqual((hdu2.data - hdu2_.data).sum(), 0)
+        
+        hdu3 = funcs.decimate(hdu, xy=1/10)
+        self.assertRaises(ValueError, (lambda: hdu3.data - hdu.data))
+        return
         
 
 if __name__=='__main__':

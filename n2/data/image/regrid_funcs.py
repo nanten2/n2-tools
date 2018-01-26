@@ -1,5 +1,5 @@
 
-
+import numpy
 import astropy.io.fits
 import astropy.wcs
 import astropy.units
@@ -194,7 +194,62 @@ def cut_world_3d(hdu, x=None, y=None, z=None):
     return cut_pix_3d(hdu, x_, y_, z_)
 
 
+def decimate(hdu, xy=None, z=None):
+    newhdu = hdu
+    
+    if xy is not None:
+        newhdu = decimate_xy(newhdu, xy)
+        pass
+        
+    if z is not None:
+        newhdu = decimate_z(newhdu, z)
+        pass
+        
+    return newhdu
 
-__all__ = ['cut_pix', 'cut_world']
+def decimate_xy(hdu, fraction):
+    ndim = hdu.header['NAXIS']
+    step = int(1/fraction)
+    
+    newh = hdu.header.copy()
+    newh['NAXIS1'] = numpy.ceil(hdu.header['NAXIS1'] / step)
+    newh['NAXIS2'] = numpy.ceil(hdu.header['NAXIS2'] / step)
+    newh['CRPIX1'] = ((hdu.header['CRPIX1'] - 1) / step) + 1
+    newh['CRPIX2'] = ((hdu.header['CRPIX2'] - 1) / step) + 1
+    newh['CDELT1'] = hdu.header['CDELT1'] * step
+    newh['CDELT2'] = hdu.header['CDELT2'] * step
+    
+    if ndim == 2:
+        newd = hdu.data[::step, ::step]
+        
+    elif ndim == 3:
+        newd = hdu.data[:, ::step, ::step]
+        pass
+    
+    newhdu = astropy.io.fits.PrimaryHDU(newd, newh)
+    return newhdu
+
+def decimate_z(hdu, fraction):
+    ndim = hdu.header['NAXIS']
+    step = int(1/fraction)
+    
+    newh = hdu.header.copy()
+    
+    if ndim == 2:
+        newd = hdu.data
+        
+    elif ndim == 3:
+        newd = hdu.data[::step, :, :]
+        newh['NAXIS3'] = numpy.ceil(hdu.header['NAXIS3'] / step)
+        newh['CRPIX3'] = ((hdu.header['CRPIX3'] - 1) / step) + 1
+        newh['CDELT3'] = hdu.header['CDELT3'] * step
+        pass
+    
+    newhdu = astropy.io.fits.PrimaryHDU(newd, newh)
+    return newhdu
+
+
+    
+__all__ = ['cut_pix', 'cut_world', 'decimate']
 
 

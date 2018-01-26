@@ -111,6 +111,11 @@ class fitsimage(object):
         new_hdu = funcs.cut_world(self.hdu, x, y, z)
         return new_hdu
         
+    @use_cache_if_exists
+    def decimate(self, x=None, y=None, z=None):
+        new_hdu = funcs.cut_world(self.hdu, x, y, z)
+        return new_hdu
+        
         
 
 
