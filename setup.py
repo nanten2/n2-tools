@@ -3,7 +3,7 @@ import setuptools
 
 
 setuptools.setup(
-    name = 'nanten2-tools',
+    name = 'n2-tools',
     version = __import__('n2').__version__,
     description = 'tools for astronomy data',
     url = 'https://github.com/nanten2/n2-tools',
@@ -13,6 +13,10 @@ setuptools.setup(
     keywords = '',
     packages = [
         'n2',
+        'n2.cache',
+        'n2.core',
+        'n2.data',
+        'n2.jupyter_tools',
     ],
     install_requires = [
     ],
