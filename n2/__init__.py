@@ -1,11 +1,13 @@
 
-__version__ = '0.0.2'
+__version__ = '0.0.3'
 
 from .data import *
 from .jupyter_tools import *
 
 if __name__ != '__main__':
     import n2.log
+    import platform
     logger = log.get_logger(__name__)
-    logger.info('n2-tools (ver.{__version__})'.format(**locals()))
+    logger.info('python {}'.format(platform.python_version()))
+    logger.info('n2-tools {__version__}'.format(**locals()))
     pass
