@@ -41,8 +41,12 @@ class debug_filter(logging.Filter):
         return logging.DEBUG <= record.levelno < logging.INFO
 
 
+
 def get_logger(name):
     logger = logging.getLogger(name)
+    if logger.hasHandlers():
+        print(logger.handlers)
+        return logger
     
     e_handler = logging.StreamHandler(sys.stdout)
     e_handler.setFormatter(fmt_error)
@@ -69,5 +73,6 @@ def get_logger(name):
     logger.addHandler(i_handler)
     logger.addHandler(d_handler)
     logger.setLevel(level)
+    logger.propagate = False
     return logger
 
