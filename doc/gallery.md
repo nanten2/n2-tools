@@ -1,4 +1,4 @@
 # gallery
 
 
-![opt](./recipes/plot-optical-image.jpg)
+<a href="./recipes/plot-optical-image.ipynb"><img src="./recipes/plot-optical-image.jpg"></a>
