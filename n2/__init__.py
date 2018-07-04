@@ -1,5 +1,5 @@
 
-__version__ = '0.0.5'
+__version__ = '0.0.6'
 
 from .data import *
 from .jupyter_tools import *
@@ -16,4 +16,10 @@ if __name__ != '__main__':
     matplotlib.rcParams['image.interpolation'] = 'none'
     matplotlib.rcParams['image.cmap'] = 'inferno'
     matplotlib.rcParams['font.family'] = 'Arial'
+    matplotlib.rcParams['xtick.top'] = True
+    matplotlib.rcParams['xtick.bottom'] = True
+    matplotlib.rcParams['xtick.direction'] = 'in'
+    matplotlib.rcParams['ytick.left'] = True
+    matplotlib.rcParams['ytick.right'] = True
+    matplotlib.rcParams['ytick.direction'] = 'in'
     pass
