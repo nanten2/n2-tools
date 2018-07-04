@@ -17,7 +17,6 @@ class jpy_rgbimage(object):
         self.data_green = rgbdata(green, nanval, qlook_size)
         self.data_blue = rgbdata(blue, nanval, qlook_size)
         self.gui = rgbgui(self)
-        self.img = self.gui.image
         pass
     
     def _ipython_display_(self):
@@ -41,13 +40,6 @@ class jpy_rgbimage(object):
             'max_b': self.data_blue.dmax,
         }
     
-    def get_data(self):
-        return {
-            'red': self.data_red.data_scaled,
-            'green': self.data_green.data_scaled,
-            'blue': self.data_blue.data_scaled,
-        }
-    
     def get_qlook(self):
         return {
             'red': self.data_red.qlook_scaled,
@@ -66,7 +58,31 @@ class jpy_rgbimage(object):
     def set_qlook_scale_blue(self, scale_min, scale_max, stretch):
         self.data_blue.scale_qlook(scale_min, scale_max, stretch)
         return
+
+    def get_image(self):
+        self.data_red.scale_data()
+        self.data_green.scale_data()
+        self.data_blue.scale_data()
+
+        r = self.data_red.data_scaled
+        g = self.data_green.data_scaled
+        b = self.data_blue.data_scaled
+
+        ny, nx = r.shape
+        
+        imga = numpy.zeros([ny, nx, 3], dtype=numpy.uint8)
+        imga[:,:,0] = r
+        imga[:,:,1] = g
+        imga[:,:,2] = b
+        img = PIL.Image.fromarray(imga)
+        return img
     
+    def save(self, path):
+        img = self.get_image()
+        img.save(path)
+        return
+
+
 
 class rgbdata(object):
     data = None
@@ -174,8 +190,6 @@ class rgbdata(object):
 
 
 class rgbgui(object):
-    image = None
-    
     def __init__(self, ctrl):
         self.ctrl = ctrl
         self.init_gui()
@@ -328,7 +342,6 @@ class rgbgui(object):
         img.save(imgio, 'bmp')
         imgio.seek(0)        
         self.img.value = imgio.read()
-        self.image = img
         return
 
 
