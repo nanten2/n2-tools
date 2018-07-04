@@ -1,3 +1,3 @@
 
-from .fits_image import *
+from .fitsimage import *
 
