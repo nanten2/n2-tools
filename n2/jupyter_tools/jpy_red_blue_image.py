@@ -7,14 +7,13 @@ import numpy
 import PIL.Image
 
 
-class jpy_rgbimage(object):
+class jpy_red_blue_image(object):
     qlook_size = 500
     
-    def __init__(self, red=None, green=None, blue=None,
+    def __init__(self, red=None, blue=None,
                  nanval='max', qlook_size=500):
         self.qlook_size = qlook_size
         self.data_red = rgbdata(red, nanval, qlook_size)
-        self.data_green = rgbdata(green, nanval, qlook_size)
         self.data_blue = rgbdata(blue, nanval, qlook_size)
         self.gui = rgbgui(self)
         pass
@@ -24,7 +23,7 @@ class jpy_rgbimage(object):
         return
     
     def get_qlook_shape(self):
-        for data in [self.data_red, self.data_green, self.data_blue]:
+        for data in [self.data_red, self.data_blue]:
             if data.qlook_shape is not None:
                 return data.qlook_shape
             continue
@@ -34,8 +33,6 @@ class jpy_rgbimage(object):
         return {
             'min_r': self.data_red.dmin,
             'max_r': self.data_red.dmax,
-            'min_g': self.data_green.dmin,
-            'max_g': self.data_green.dmax,
             'min_b': self.data_blue.dmin,
             'max_b': self.data_blue.dmax,
         }
@@ -43,7 +40,6 @@ class jpy_rgbimage(object):
     def get_qlook(self):
         return {
             'red': self.data_red.qlook_scaled,
-            'green': self.data_green.qlook_scaled,
             'blue': self.data_blue.qlook_scaled,
         }
     
@@ -51,28 +47,22 @@ class jpy_rgbimage(object):
         self.data_red.scale_qlook(scale_min, scale_max, stretch)
         return
 
-    def set_qlook_scale_green(self, scale_min, scale_max, stretch):
-        self.data_green.scale_qlook(scale_min, scale_max, stretch)
-        return
-    
     def set_qlook_scale_blue(self, scale_min, scale_max, stretch):
         self.data_blue.scale_qlook(scale_min, scale_max, stretch)
         return
 
     def get_image(self):
         self.data_red.scale_data()
-        self.data_green.scale_data()
         self.data_blue.scale_data()
 
         r = self.data_red.data_scaled
-        g = self.data_green.data_scaled
         b = self.data_blue.data_scaled
 
         ny, nx = r.shape
         
         imga = numpy.zeros([ny, nx, 3], dtype=numpy.uint8)
         imga[:,:,0] = r
-        imga[:,:,1] = g
+        imga[:,:,1] = (r/2 + b/2)
         imga[:,:,2] = b
         img = PIL.Image.fromarray(imga)
         return img
@@ -203,7 +193,6 @@ class rgbgui(object):
         self.refresh_image()
         self.box_text._ipython_display_()
         self.box_r._ipython_display_()
-        self.box_g._ipython_display_()
         self.box_b._ipython_display_()
         self.img._ipython_display_()
         return
@@ -233,18 +222,6 @@ class rgbgui(object):
         self.min_r.observe(self.refresh_slider, names='value')
         self.max_r.observe(self.refresh_slider, names='value')
         
-        self.slider_g = ipywidgets.FloatRangeSlider(description = '<b style="color:#20af00">Green:</b>',
-                                                                                    min = -9e99, max = 9e99, step = 1e98, value = (-9e99, 9e99),
-                                                                                    layout = slider_layout)
-        self.min_g = ipywidgets.FloatText(value=-9e99, layout=minmax_layout)
-        self.max_g = ipywidgets.FloatText(value=9e99, layout=minmax_layout)
-        self.stretch_g = ipywidgets.Dropdown(options=stretches, value='linear', layout=stretch_layout)
-        self.box_g = ipywidgets.HBox([self.slider_g, self.min_g, self.max_g, self.stretch_g])
-        self.slider_g.observe(self.scale_green, names='value')
-        self.stretch_g.observe(self.scale_green, names='value')
-        self.min_g.observe(self.refresh_slider, names='value')
-        self.max_g.observe(self.refresh_slider, names='value')
-        
         self.slider_b = ipywidgets.FloatRangeSlider(description = '<b style="color:#496bd8">Blue:</b>',
                                                                                     min = -9e99, max = 9e99, step = 1e98, value = (-9e99, 9e99),
                                                                                     layout = slider_layout)
@@ -265,18 +242,12 @@ class rgbgui(object):
     def refresh_slider(self, change={}):
         min_r = self.min_r.value
         max_r = self.max_r.value
-        min_g = self.min_g.value
-        max_g = self.max_g.value
         min_b = self.min_b.value
         max_b = self.max_b.value
         
         self.slider_r.set_trait('min', min_r)
         self.slider_r.set_trait('max', max_r)
         self.slider_r.set_trait('step', (max_r - min_r)/1000)
-        
-        self.slider_g.set_trait('min', min_g)
-        self.slider_g.set_trait('max', max_g)
-        self.slider_g.set_trait('step', (max_g - min_g)/1000)
         
         self.slider_b.set_trait('min', min_b)
         self.slider_b.set_trait('max', max_b)
@@ -291,11 +262,6 @@ class rgbgui(object):
             dminmax['max_r'] *= 1.2
             pass
         
-        if dminmax['min_g'] == dminmax['max_g']:
-            dminmax['min_g'] *= 0.8
-            dminmax['max_g'] *= 1.2
-            pass
-        
         if dminmax['min_b'] == dminmax['max_b']:
             dminmax['min_b'] *= 0.8
             dminmax['max_b'] *= 1.2
@@ -303,8 +269,6 @@ class rgbgui(object):
             
         self.min_r.set_trait('value', dminmax['min_r'])
         self.max_r.set_trait('value', dminmax['max_r'])
-        self.min_g.set_trait('value', dminmax['min_g'])
-        self.max_g.set_trait('value', dminmax['max_g'])
         self.min_b.set_trait('value', dminmax['min_b'])
         self.max_b.set_trait('value', dminmax['max_b'])
         return
@@ -313,13 +277,6 @@ class rgbgui(object):
         dmin, dmax = self.slider_r.value
         stretch = self.stretch_r.value
         self.ctrl.set_qlook_scale_red(dmin, dmax, stretch)
-        self.refresh_image()
-        return
-    
-    def scale_green(self, change):
-        dmin, dmax = self.slider_g.value
-        stretch = self.stretch_g.value
-        self.ctrl.set_qlook_scale_green(dmin, dmax, stretch)
         self.refresh_image()
         return
     
@@ -333,10 +290,10 @@ class rgbgui(object):
     def refresh_image(self):
         d = self.ctrl.get_qlook()
         nx, ny = self.ctrl.get_qlook_shape()
-        
+    
         imga = numpy.zeros([ny, nx, 3], dtype=numpy.uint8)
         imga[:,:,0] = d['red']
-        imga[:,:,1] = d['green']
+        imga[:,:,1] = (d['red']/2 + d['blue']/2)
         imga[:,:,2] = d['blue']
         img = PIL.Image.fromarray(imga)
         imgio = io.BytesIO()
@@ -348,5 +305,5 @@ class rgbgui(object):
 
 
 __all__ = [
-    'jpy_rgbimage',
+    'jpy_red_blue_image',
 ]
