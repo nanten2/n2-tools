@@ -5,3 +5,5 @@
 <a href="./recipes/plot-rgbimage.ipynb"><img src="./recipes/plot-rgbimage.jpg" width="260px"></a>
 <a href="./recipes/ccc-red-blue-image.ipynb"><img src="./recipes/ccc-red-blue-image.jpg" width="260px"></a>
 
+## colorbar
+<a href="./recipes/colorbar-1.ipynb"><img src="./recipes/colorbar-1.jpg" width="260px">colorbar-1</a>

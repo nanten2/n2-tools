@@ -16,6 +16,7 @@ setuptools.setup(
         'n2.cache',
         'n2.core',
         'n2.data',
+        'n2.plot',
         'n2.jupyter_tools',
     ],
     install_requires = [

@@ -1,4 +1,6 @@
 
+import n2.core
+
 import ipywidgets
 
 import io
@@ -7,14 +9,10 @@ import numpy
 import PIL.Image
 
 
-class jpy_red_blue_image(object):
-    qlook_size = 500
-    
-    def __init__(self, red=None, blue=None,
-                 nanval='max', qlook_size=500):
-        self.qlook_size = qlook_size
-        self.data_red = rgbdata(red, nanval, qlook_size)
-        self.data_blue = rgbdata(blue, nanval, qlook_size)
+class jpy_red_blue_cube(object):
+    def __init__(self, red=None, blue=None, nanval='max'):
+        self.data_red = rgbdata(red, nanval)
+        self.data_blue = rgbdata(blue, nanval)
         self.gui = rgbgui(self)
         pass
     
@@ -22,12 +20,8 @@ class jpy_red_blue_image(object):
         self.gui._ipython_display_()
         return
     
-    def get_qlook_shape(self):
-        for data in [self.data_red, self.data_blue]:
-            if data.qlook_shape is not None:
-                return data.qlook_shape
-            continue
-        return
+    def get_shape(self):
+        return self.data_red.data_shape
     
     def get_minmax(self):
         return {
@@ -43,21 +37,21 @@ class jpy_red_blue_image(object):
             'blue': self.data_blue.qlook_scaled,
         }
     
-    def set_qlook_scale_red(self, scale_min, scale_max, stretch):
-        self.data_red.scale_qlook(scale_min, scale_max, stretch)
+    def set_data_scale_red(self, scale_min, scale_max, stretch):
+        self.data_red.scale_data(scale_min, scale_max, stretch)
         return
-
-    def set_qlook_scale_blue(self, scale_min, scale_max, stretch):
-        self.data_blue.scale_qlook(scale_min, scale_max, stretch)
+    
+    def set_data_scale_blue(self, scale_min, scale_max, stretch):
+        self.data_blue.scale_data(scale_min, scale_max, stretch)
         return
-
+    
     def get_image(self):
         self.data_red.scale_data()
         self.data_blue.scale_data()
-
+        
         r = self.data_red.data_scaled
         b = self.data_blue.data_scaled
-
+        
         ny, nx = r.shape
         
         imga = numpy.zeros([ny, nx, 3], dtype=numpy.uint8)
@@ -75,31 +69,34 @@ class jpy_red_blue_image(object):
 
 
 class rgbdata(object):
+    hdu = None
+    nbin = None
+    nconv = None
     data = None
     data_scaled = None
     data_shape = None
-    qlook = None
-    qlook_scaled = None
-    qlook_shape = None
     dmin = None
     dmax = None
     scale_min = None
     scale_max = None
     scale_stretch = None
     
-    def __init__(self, data, nanval='max', qlook_size=500):
+    def __init__(self, hdu, nanval='max'):
         warnings.filterwarnings('ignore')
-        self.set_data(data, nanval, qlook_size)
+        self.set_data(hdu, nanval)
         warnings.filterwarnings('default')
         pass
     
-    def set_data(self, data, nanval='max', qlook_size=500):
-        if data is None: return
-        ny, nx = data.shape
-        self.qlook_shape = (int(qlook_size), int(ny/(nx/qlook_size)))
+    def set_data(self, hdu, nanval='max'):
+        if hdu is None: return
+        self.hdu = hdu.copy()
+
+        data = hdu.data.copy()
+        self.data = data
+        self.data_shape = data.shape
+        nx, ny, nx = data.shape
         
-        data = data.copy()
-        data = data[::-1,:]
+        data = data[:,::-1,:]
         
         if nanval == 'max':
             data[data!=data] = numpy.nanmax(data)
@@ -108,29 +105,22 @@ class rgbdata(object):
         else:
             data[data!=data] = nanval
             pass
-            
-        self.data = data
-        self.qlook = numpy.asanyarray(
-            PIL.Image.fromarray(data).resize(self.qlook_shape)
-        )
+        
         self.dmin = numpy.nanmin(data)
         self.dmax = numpy.nanmax(data)
         self.scale_qlook()
         self.scale_data()
         return
     
-    def scale_data(self):
+    def binning(self, nbin):
+        bin_hdu = n2.core.velocity_binning_pix(self.hdu, nbin)
+        self.data = bin_hdu.data
+        return
+    
+    def scale_data(self, scale_min=None, scale_max=None, stretch='linear'):
         warnings.filterwarnings('ignore')
         self.data_scaled = self._scale(
-            self.data, self.scale_min, self.scale_max, self.scale_stretch
-        )
-        warnings.filterwarnings('default')
-        return self.data_scaled
-    
-    def scale_qlook(self, scale_min=None, scale_max=None, stretch='linear'):
-        warnings.filterwarnings('ignore')
-        self.qlook_scaled = self._scale(
-            self.qlook, scale_min, scale_max, stretch
+            self.data, scale_min, scale_max, stretch
         )
         warnings.filterwarnings('default')
         return
@@ -188,7 +178,7 @@ class rgbgui(object):
         self.refresh_slider()
         self.refresh_image()
         pass
-        
+    
     def _ipython_display_(self):
         self.refresh_image()
         self.box_text._ipython_display_()
@@ -196,7 +186,7 @@ class rgbgui(object):
         self.box_b._ipython_display_()
         self.img._ipython_display_()
         return
-
+    
     def init_gui(self):
         stretches = ['linear', 'sqrt', 'log']
         
@@ -211,8 +201,8 @@ class rgbgui(object):
         self.box_text = ipywidgets.HBox([text_range, text_min, text_max, text_stretch])
         
         self.slider_r = ipywidgets.FloatRangeSlider(description = '<b style="color:#cc3737">Red:</b>',
-                                                                                    min = -9e99, max = 9e99, step = 1e98, value = (-9e99, 9e99),
-                                                                                    layout = slider_layout)
+                                                    min = -9e99, max = 9e99, step = 1e98, value = (-9e99, 9e99),
+                                                    layout = slider_layout)
         self.min_r = ipywidgets.FloatText(value=-9e99, layout=minmax_layout)
         self.max_r = ipywidgets.FloatText(value=9e99, layout=minmax_layout)
         self.stretch_r = ipywidgets.Dropdown(options=stretches, value='linear', layout=stretch_layout)
@@ -223,9 +213,8 @@ class rgbgui(object):
         self.max_r.observe(self.refresh_slider, names='value')
         
         self.slider_b = ipywidgets.FloatRangeSlider(description = '<b style="color:#496bd8">Blue:</b>',
-                                                                                    min = -9e99, max = 9e99, step = 1e98, value = (-9e99, 9e99),
-                                                                                    layout = slider_layout)
-
+                                                    min = -9e99, max = 9e99, step = 1e98, value = (-9e99, 9e99),
+                                                    layout = slider_layout)
         self.min_b = ipywidgets.FloatText(value=-9e99, layout=minmax_layout)
         self.max_b = ipywidgets.FloatText(value=9e99, layout=minmax_layout)
         self.stretch_b = ipywidgets.Dropdown(options=stretches, value='linear', layout=stretch_layout)
@@ -234,9 +223,18 @@ class rgbgui(object):
         self.stretch_b.observe(self.scale_blue, names='value')
         self.min_b.observe(self.refresh_slider, names='value')
         self.max_b.observe(self.refresh_slider, names='value')
-    
-        qlook_shape = self.ctrl.get_qlook_shape()
-        self.img = ipywidgets.Image(height=qlook_shape[0], width=qlook_shape[1], format='bmp')
+        
+        self.slider_chr = ipywidgets.IntSlider(description = '<b style="color:#cc3737">ch-R:</b>',
+                                               min = -9e99, max = 9e99, step = 1, value = 0,
+                                               layout = slider_layout)
+        self.slider_chr.observe(self.scale_red, names='value')
+        self.stretch_r.observe(self.scale_red, names='value')
+        self.min_r.observe(self.refresh_slider, names='value')
+        self.max_r.observe(self.refresh_slider, names='value')
+        
+        
+        shape = self.ctrl.get_shape()
+        self.img = ipywidgets.Image(height=shape[1], width=shape[2], format='bmp')
         return
     
     def refresh_slider(self, change={}):
@@ -305,5 +303,5 @@ class rgbgui(object):
 
 
 __all__ = [
-    'jpy_red_blue_image',
+    'jpy_red_blue_cube',
 ]
