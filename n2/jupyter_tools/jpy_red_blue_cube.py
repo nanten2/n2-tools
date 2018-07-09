@@ -263,20 +263,26 @@ class rgbgui(object):
         
         cube_shape = self.ctrl.get_shape()
         ch_len = cube_shape[0]
+        
+        self.visible_r = ipywidgets.Checkbox(description='view', value=True, layout={'width':'140px'})
+        self.visible_r.observe(self.refresh_image)
         self.slider_chr = ipywidgets.IntSlider(description = '<b style="color:#cc3737">ch-R:</b>',
                                                min = 0, max = ch_len-1, step = 1, value = 0,
                                                layout = slider_layout)
         self.slider_chr.observe(self.refresh_image, names='value')
-        self.nbin_r = ipywidgets.IntText(description='nbin', value=1)
+        self.nbin_r = ipywidgets.IntText(description='nbin', value=1, layout={'width': '140px'})
         self.nbin_r.observe(self.nbin_red)
-        self.chbox_r = ipywidgets.HBox([self.slider_chr, self.nbin_r])
+        self.chbox_r = ipywidgets.HBox([self.visible_r, self.slider_chr, self.nbin_r])
+        
+        self.visible_b = ipywidgets.Checkbox(description='view', value=True, layout={'width':'140px'})
+        self.visible_b.observe(self.refresh_image)
         self.slider_chb = ipywidgets.IntSlider(description = '<b style="color:#496bd8">ch-B:</b>',
                                                min = 0, max = ch_len-1, step = 1, value = 0,
                                                layout = slider_layout)
         self.slider_chb.observe(self.refresh_image, names='value')
-        self.nbin_b = ipywidgets.IntText(description='nbin', value=1)
+        self.nbin_b = ipywidgets.IntText(description='nbin', value=1, layout={'width': '140px'})
         self.nbin_b.observe(self.nbin_blue)
-        self.chbox_b = ipywidgets.HBox([self.slider_chb, self.nbin_b])
+        self.chbox_b = ipywidgets.HBox([self.visible_b, self.slider_chb, self.nbin_b])
         
         shape = self.ctrl.get_shape()
         self.img = ipywidgets.Image(height=shape[1], width=shape[2], format='bmp')
@@ -342,6 +348,11 @@ class rgbgui(object):
         ch_b = self.slider_chb.value
         r = self.ctrl.get_red_ch(ch_r)
         b = self.ctrl.get_blue_ch(ch_b)
+        r = r.copy()
+        b = b.copy()
+        
+        if not self.visible_r.value: r *= 0
+        if not self.visible_b.value: b *= 0
         
         ny, nx = r.shape
     
