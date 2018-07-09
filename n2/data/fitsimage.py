@@ -122,6 +122,9 @@ class fitsimage(object):
         self.header = hdu.header
         self.verify_header()
         self.wcs = astropy.wcs.WCS(hdu)
+        if self.wcs.naxis > 2:
+            self.wcs2 = astropy.wcs.WCS(hdu, naxis=2)
+            pass
         if _save_cache:
             self.save_cache()
             pass
