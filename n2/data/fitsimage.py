@@ -6,6 +6,7 @@ logger = n2.log.get_logger(__name__)
 
 import io
 import os
+import functools
 import numpy
 import astropy.io.fits
 import astropy.wcs
@@ -91,6 +92,7 @@ def open_cache(key):
     return fimage
     
 def use_cache_if_exists(func):
+    @functools.wraps(func)
     def wrapper(*args, **kwargs):
         args2 = list(args)
         self = args2.pop(0)
@@ -238,6 +240,11 @@ class fitsimage(object):
         return new_hdu
     
     @use_cache_if_exists
+    def single_ch(self, ch):
+        new_hdu = n2.core.single_ch(self.hdu, ch)
+        return new_hdu
+    
+    @use_cache_if_exists
     def peak(self):
         new_hdu = n2.core.peak(self.hdu)
         return new_hdu
@@ -247,6 +254,23 @@ class fitsimage(object):
         new_hdu = n2.core.mom0(self.hdu)
         return new_hdu
         
+    @use_cache_if_exists
+    def mom1(self):
+        new_hdu = n2.core.mom1(self.hdu)
+        return new_hdu
+
+    @use_cache_if_exists
+    def mom2(self):
+        new_hdu = n2.core.mom2(self.hdu)
+        return new_hdu
+
+    @use_cache_if_exists
+    def moment_mask(self, smooth_xy=0, smooth_v=0, nsig=5, minsize=5):
+        new_hdu = n2.core.moment_mask(self.hdu, smooth_xy, smooth_v,
+                                      nsig, minsize)
+        return new_hdu
+
+
 
 __all__ = [
     'FITS_AUTO_CACHE',

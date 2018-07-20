@@ -4,7 +4,7 @@ import matplotlib
 matplotlib.rcParams['image.origin'] = 'lower'
 matplotlib.rcParams['image.interpolation'] = 'none'
 matplotlib.rcParams['image.cmap'] = 'inferno'
-matplotlib.rcParams['font.family'] = 'Arial'
+matplotlib.rcParams['font.family'] = 'Arial,freesans'
 matplotlib.rcParams['xtick.top'] = True
 matplotlib.rcParams['xtick.bottom'] = True
 matplotlib.rcParams['xtick.direction'] = 'in'
