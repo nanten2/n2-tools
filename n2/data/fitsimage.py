@@ -130,6 +130,7 @@ class fitsimage(object):
         if _save_cache:
             self.save_cache()
             pass
+        self.writeto = self.hdu.writeto
         pass
     
     def verify_header(self):
@@ -192,9 +193,12 @@ class fitsimage(object):
         save_cache(self.hdu, key)
         return
     
-    def writeto(self, path, **kwargs):
-        self.hdu.writeto(path, **kwargs)
-        return
+    def get_vaxis(self):
+        indv = numpy.arange(self.header['NAXIS3'])
+        pix = numpy.array([indv*0, indv*0, indv]).T
+        v = self.wcs.all_pix2world(pix, 0).T[2]
+        cunit = astropy.units.Unit(self.header['CUNIT3'])
+        return v * cunit
 
     @use_cache_if_exists
     def _testfunc_zero(self):
