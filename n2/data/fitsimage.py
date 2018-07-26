@@ -25,6 +25,8 @@ def open_fits(path, hdu_num=0):
         filename = os.path.basename(path)
         add_n2hist(hdu, 'open_fits', filename=filename, hdu_num=hdu_num)
         pass
+
+    hdu.header['N2HASH'] = n2.cache.hash(read_n2hist(hdu.header))
     fimage = fitsimage(hdu, _save_cache=False)
     return fimage
 
@@ -43,9 +45,15 @@ def verify_header(hdu):
     return
         
 
-def read_n2hist(hdu):
+def read_n2hist(hdu_or_header):
+    if isinstance(hdu_or_header, astropy.io.fits.Header):
+        header = hdu_or_header
+    else:
+        header = hdu_or_header.header
+        pass
+    
     try:
-        hist = hdu.header['HISTORY']
+        hist = header['HISTORY']
     except KeyError:
         hist = []
         pass
@@ -65,10 +73,16 @@ def gen_n2hist(funcname, *args, **kwargs):
     n2hist += 'n2: ' + '-' * len(funcname) + '\n'
     
     for i, arg in enumerate(args):
+        if isinstance(arg, astropy.io.fits.Header):
+            arg = arg['N2HASH']
+            pass
         n2hist += 'n2: args[{i}] = {arg}\n'.format(**locals())
         continue
         
     for key, value in sorted(kwargs.items()):
+        if isinstance(value, astropy.io.fits.Header):
+            value = value['N2HASH']
+            pass
         n2hist += 'n2: {key} = {value}\n'.format(**locals())
         continue
     
@@ -109,6 +123,7 @@ def use_cache_if_exists(func):
         
         new_hdu = func(*args, **kwargs)
         add_n2hist(new_hdu, funcname, *args2, **kwargs)
+        new_hdu.header['N2HASH'] = n2.cache.hash(read_n2hist(new_hdu.header))
         new_fimage = fitsimage(new_hdu)
         return new_fimage
     
@@ -274,7 +289,12 @@ class fitsimage(object):
                                       nsig, minsize)
         return new_hdu
 
-
+    @use_cache_if_exists
+    def regrid(self, output_header, order='bilinear'):
+        new_hdu = n2.core.regrid(self.hdu, output_header, order)
+        return new_hdu
+    
+    
 
 __all__ = [
     'FITS_AUTO_CACHE',
