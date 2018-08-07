@@ -31,7 +31,7 @@ def regrid(hdu, output_header, order='bilinear'):
     outh = output_header['N2HASH']
     logger.info('(regrid) output_header={outh}, order={order}'.format(**locals()))
     logger.info('(regrid) start calculation'.format(**locals()))
-    regrided = reproject.reproject_interp(hdu, output_header, order=order)
+    regrided, footprint = reproject.reproject_interp(hdu, output_header, order=order)
     logger.info('(regrid) done'.format(**locals()))
     
     new_hdu = astropy.io.fits.PrimaryHDU(regrided, output_header)

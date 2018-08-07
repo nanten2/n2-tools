@@ -106,7 +106,7 @@ class rgbdata(object):
     def set_data(self, data, nanval='max', qlook_size=500):
         if data is None: return
         ny, nx = data.shape
-        self.qlook_shape = (int(ny/(nx/qlook_size)), int(qlook_size))
+        self.qlook_shape = (int(nx/(ny/qlook_size)), int(qlook_size))
         
         data = data.copy()
         data = data[::-1,:]
