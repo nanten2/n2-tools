@@ -62,7 +62,7 @@ def mom0(hdu):
     nanmask = numpy.logical_not(numpy.isnan(hdu.data)).sum(axis=0) == 0
     
     mom0 = numpy.nansum(hdu.data, axis=0).astype(numpy.float32) * bunit
-    mom0 *= cdelt3
+    mom0 *= abs(cdelt3)
     mom0[nanmask] = numpy.nan
     logger.info('(mom0) done')
     
