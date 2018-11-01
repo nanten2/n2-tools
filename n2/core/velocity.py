@@ -16,7 +16,7 @@ import astropy.modeling
 def remove_velocity_axis(hdu):
     newh = astropy.wcs.WCS(hdu.header, naxis=2).to_header()
     for k, v in hdu.header.items():
-        if k[:5] in ['NAXIS', 'CTYPE', 'CRVAL', 'CRPIX', 'CDELT', 'CROTA', 'CUNIT']:
+        if k[:5] in ['NAXIS', 'WCSAXES', 'CTYPE', 'CRVAL', 'CRPIX', 'CDELT', 'CROTA', 'CUNIT']:
             continue
         newh[k] = v
         continue
