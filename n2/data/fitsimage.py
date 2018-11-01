@@ -74,14 +74,14 @@ def gen_n2hist(funcname, *args, **kwargs):
     
     for i, arg in enumerate(args):
         if isinstance(arg, astropy.io.fits.Header):
-            arg = arg['N2HASH']
+            arg = n2.cache.hash(str(arg))
             pass
         n2hist += 'n2: args[{i}] = {arg}\n'.format(**locals())
         continue
         
     for key, value in sorted(kwargs.items()):
         if isinstance(value, astropy.io.fits.Header):
-            value = value['N2HASH']
+            value = n2.cache.hash(str(value))
             pass
         n2hist += 'n2: {key} = {value}\n'.format(**locals())
         continue
