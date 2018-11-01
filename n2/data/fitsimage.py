@@ -294,6 +294,11 @@ class fitsimage(object):
         new_hdu = n2.core.regrid(self.hdu, output_header, order)
         return new_hdu
     
+    @use_cache_if_exists
+    def pv(self, sumaxis):
+        new_hdu = n2.core.pv(self.hdu, sumaxis)
+        return new_hdu
+    
     
 
 __all__ = [

@@ -212,6 +212,47 @@ def moment_mask(hdu, smooth_xy=0, smooth_v=0, nsig=5, minsize=5):
     return hdu3
 
 
+def pv(hdu, sumaxis=1):
+    logger.info('(pv) sumaxis={sumaxis}'.format(**locals()))
+    
+    bunit_str = hdu.header.get('BUNIT', '')
+    bunit = astropy.units.Unit(bunit_str)
+    cunit_str = hdu.header.get('CUNIT{sumaxis}'.format(**locals()), '')
+    cunit = astropy.units.Unit(cunit_str)
+    cdelt = hdu.header.get('CDELT{sumaxis}'.format(**locals())) * cunit
+    new_bunit = bunit * cunit
+    
+    if bunit != '':
+        logger.debug('(pv) original bunit : {bunit}'.format(**locals()))        
+    else:
+        logger.warning('(pv) BUNIT is not set in header')
+        pass
+
+    if cunit != '':
+        logger.debug('(pv) original cunit{sumaxis} : {cunit}'.format(**locals()))
+    else:
+        logger.warning('(pv) CUNIT{sumaxis} is not set in header'.format(**locals()))
+        pass
+
+    logger.info('(pv) start calculation')
+    nanmask = numpy.logical_not(numpy.isnan(hdu.data)).sum(axis=3-sumaxis) == 0
+    
+    pv = numpy.nansum(hdu.data, axis=3-sumaxis).astype(numpy.float32) * bunit
+    pv *= cdelt
+    pv[nanmask] = numpy.nan
+    pvshape = list(pv.shape)
+    pvshape.insert(3-sumaxis, 1)
+    pv = pv.reshape(pvshape)
+    logger.info('(pv) done')
+    
+    logger.debug('(pv) new bunit : {new_bunit}'.format(**locals()))
+    new_header = hdu.header.copy()
+    new_header['BUNIT'] = new_bunit.to_string()
+    
+    new_hdu = astropy.io.fits.PrimaryHDU(pv, new_header)
+    return new_hdu
+
+
 def pix2world(pix, header, axis):
     wcs = astropy.wcs.WCS(header)
     cunit = astropy.units.Unit(header.get('CUNIT%d'%(axis)))
@@ -258,4 +299,5 @@ __all__ = [
     'mom1',
     'mom2',
     'moment_mask',
+    'pv',
 ]

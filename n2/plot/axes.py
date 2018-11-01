@@ -3,7 +3,7 @@ import matplotlib.pyplot
 
 
 def subplots(xpix, ypix, ncols=1, nrows=1, left=50, right=20, bottom=50,
-              top=20, wspace=0, hspace=0, pixscale=1, projection=None):
+              top=20, wspace=0, hspace=0, pixscale=1, projection=None, slices=None):
     xpix *= pixscale
     ypix *= pixscale
     
@@ -19,7 +19,7 @@ def subplots(xpix, ypix, ncols=1, nrows=1, left=50, right=20, bottom=50,
             b = 1 - (top + (_r + 1) * ypix + _r * hspace) / hfig
             w = xpix / wfig
             h = ypix / hfig
-            _ax = fig.add_axes([l, b, w, h], projection=projection)
+            _ax = fig.add_axes([l, b, w, h], projection=projection, slices=slices)
             ax.append(_ax)
             continue
         continue
