@@ -330,6 +330,16 @@ class fitsimage(object):
         new_hdu = n2.core.column_density_total_LTE(self.hdu, Tk, level, B)
         return new_hdu
     
+    @use_cache_if_exists
+    def convert_N13CO_to_NH2(self, factor='Frerking1982'):
+        new_hdu = n2.core.convert_N13CO_to_NH2(self.hdu, factor)
+        return new_hdu
+    
+    @use_cache_if_exists
+    def convert_NC18O_to_NH2(self, factor='Frerking1982'):
+        new_hdu = n2.core.convert_NC18O_to_NH2(self.hdu, factor)
+        return new_hdu
+    
     
 
 __all__ = [

@@ -2,6 +2,7 @@
 import n2.log
 logger = n2.log.get_logger(__name__)
 
+import numpy
 import astroquery.lamda
 import astropy.units
 import astropy.io.fits
@@ -69,7 +70,10 @@ def get_quantity(q, default_unit=''):
     
     elif isinstance(q, astropy.io.fits.PrimaryHDU):
         bunit = get_bunit(q)
-        return q.data * bunit, q.header['N2HASH']
+        return get_quantity(q.data, bunit)[0], q.header['N2HASH']
+
+    elif isinstance(q, n2.data.fitsimage.fitsimage):
+        return get_quantity(q.data, q.bunit)[0], q.header['N2HASH']
     
     else:
         ret = q * astropy.units.Unit(default_unit)
@@ -102,7 +106,7 @@ def get_B(hdu, B):
 
 def tex(hdu, tau, freq=None, Tbg=None):
     tau, tau_str = get_quantity(tau, '')    
-    T = hdu.data * get_bunit(hdu)
+    T = get_quantity(hdu.data, get_bunit(hdu))[0]
     freq = get_freq(hdu, freq)
     Tbg = get_Tbg(Tbg)
     
@@ -114,8 +118,8 @@ def tex(hdu, tau, freq=None, Tbg=None):
     B = 1 / expm1(hvk / Tbg)
     tex = hvk * (ln(1 + (A + B)**-1))**-1
     
-    logger.debug('(tex) hv/k : {0}'.format(hvk))
-    logger.debug('(tex) k/hv/expm1(hv/kTbg) : {0}'.format(B / hvk))
+    logger.debug('(tex) hv/k : {0:.3e}'.format(hvk.to('Hz K s')))
+    logger.debug('(tex) hv/k/expm1(hv/kTbg) : {0:.3e}'.format(B * hvk.to('Hz K s')))
     logger.info('(tex) done')
     
     new_header = hdu.header.copy()
@@ -126,7 +130,7 @@ def tex(hdu, tau, freq=None, Tbg=None):
 
 def tau(hdu, Tex, freq=None, Tbg=None):
     tex, tex_str = get_quantity(Tex, 'K')
-    T = hdu.data * get_bunit(hdu)
+    T = get_quantity(hdu.data, get_bunit(hdu))[0]
     freq = get_freq(hdu, freq)
     Tbg = get_Tbg(Tbg)
     
@@ -138,8 +142,8 @@ def tau(hdu, Tex, freq=None, Tbg=None):
     B = 1 / expm1(hvk / Tbg)
     tau = -ln(1 - T/hvk * (A - B)**-1)
     
-    logger.debug('(tau) hv/k : {0}'.format(hvk))
-    logger.debug('(tau) 1/expm1(hv/kTbg) : {0}'.format(B))
+    logger.debug('(tau) hv/k : {0:.3e}'.format(hvk))
+    logger.debug('(tau) 1/expm1(hv/kTbg) : {0:.3e}'.format(B))
     logger.info('(tau) done')
     
     new_header = hdu.header.copy()
@@ -151,23 +155,23 @@ def tau(hdu, Tex, freq=None, Tbg=None):
 def column_density_upper(hdu, Tex, EinsteinA=None, freq=None):
     tex, tex_str = get_quantity(Tex, 'K')
     line = parse_line(hdu.header['LINE'])
-    tau = hdu.data * get_bunit(hdu)
+    tau = get_quantity(hdu.data, get_bunit(hdu))[0]
     freq = get_freq(hdu, freq)
     EinsteinA = get_EinsteinA(hdu, EinsteinA)
-    
     
     logger.info('(column_density_upper) Tex={tex_str}, EinsteinA={EinsteinA}, freq={freq}'.format(**locals()))
     logger.info('(column_density_upper) start calculation')
     
     N_up = 8 * pi * freq**3 / c**3 / EinsteinA / expm1(h*freq/k_B/tex) * tau
     
-    logger.debug('(column_density_upper) 8 pi v3 / c3 / A : {0}'.format(8 * pi * freq**3 / c**3 / EinsteinA))
+    logger.debug('(column_density_upper) 8 pi v3 / c3 / A : {0:.3e}'.format(8 * pi * (freq**3 / c**3 / EinsteinA).to('s m-3')))
     logger.info('(column_density_upper) done')
     
     new_header = hdu.header.copy()
     new_header['BUNIT'] = 'cm-2'
     new_header['MOLECULE'] = line['molecule']
     new_header['LEVEL'] = line['up']
+    new_header['PROPERTY'] = 'Column density'
     new_hdu = astropy.io.fits.PrimaryHDU(N_up.to('cm-2'), new_header)
     return new_hdu
 
@@ -176,7 +180,10 @@ def column_density_total_LTE(hdu, Tk, level=None, B=None):
     tk, tk_str = get_quantity(Tk, 'K')
     level = get_level(hdu, level)
     B = get_B(hdu, B)
-    Nj = hdu.data * get_bunit(hdu)
+    Nj = get_quantity(hdu.data, get_bunit(hdu))[0]
+    
+    logger.info('(column_density_total_LTE) Tk={tk_str}, level={level}, B={B}'.format(**locals()))
+    logger.info('(column_density_total_LTE) start calculation')
     
     Tcalc = tk[None,:,:]
     Jcalc = numpy.arange(100)[:,None,None]
@@ -188,7 +195,72 @@ def column_density_total_LTE(hdu, Tk, level=None, B=None):
     maxkThB = numpy.nanmax(k_B*tk/h/B)    
     Ej = h * B * level * (level+1)
     Ntot = Nj * Q / ((2 * level+1) * exp(-Ej / k_B / tk))
-    return Ntot
+
+    logger.info('(column_density_total_LTE) done')
+    new_header = hdu.header.copy()
+    new_header['BUNIT'] = 'cm-2'
+    new_header['PROPERTY'] = 'Column density'
+    new_header['METHOD'] = 'LTE, {0}'.format(hdu.header['LINE'])
+    if 'LEVEL' in new_header: del(new_header['LEVEL'])
+    new_hdu = astropy.io.fits.PrimaryHDU(Ntot.to('cm-2'), new_header)
+    return new_hdu
+
+
+def convert_N13CO_to_NH2(hdu, factor='Frerking1982'):
+    X13_Frerking1982 = 7.1e5
+    
+    if str(factor).lower()=='frerking1982':
+        X = X13_Frerking1982
+        
+    elif not isinstance(factor, str):
+        X = factor
+
+    else:
+        X = X13_Frerking1982
+        pass
+    
+    logger.info('(convert_N13CO_to_NH2) factor={factor}'.format(**locals()))
+    logger.debug('(convert_N13CO_to_NH2) factor={X:.3e}'.format(**locals()))
+    logger.info('(convert_N13CO_to_NH2) start calculation')    
+    NH2 = hdu.data * X
+    logger.info('(convert_N13CO_to_NH2) done')
+    
+    new_header = hdu.header.copy()
+    new_header['BUNIT'] = 'cm-2'
+    new_header['PROPERTY'] = 'Column density'
+    new_header['MOLECULE'] = 'h2'
+    new_hdu = astropy.io.fits.PrimaryHDU(NH2.to('cm-2'), new_header)
+    return new_hdu
+
+    
+def convert_NC18O_to_NH2(hdu, factor='Frerking1982'):
+    X18_Frerking1982 = 5.9e6
+    
+    if str(factor).lower()=='frerking1982':
+        X = X18_Frerking1982
+        
+    elif not isinstance(factor, str):
+        X = factor
+
+    else:
+        X = X18_Frerking1982
+        pass
+    
+    logger.info('(convert_N18CO_to_NH2) factor={factor}'.format(**locals()))
+    logger.debug('(convert_N18CO_to_NH2) factor={X:.3e}'.format(**locals()))
+    logger.info('(convert_N18CO_to_NH2) start calculation')    
+    NH2 = hdu.data * X
+    logger.info('(convert_N18CO_to_NH2) done')
+    
+    new_header = hdu.header.copy()
+    new_header['BUNIT'] = 'cm-2'
+    new_header['PROPERTY'] = 'Column density'
+    new_header['MOLECULE'] = 'h2'
+    new_hdu = astropy.io.fits.PrimaryHDU(NH2.to('cm-2'), new_header)
+    return new_hdu
+
+
+
 
 
 __all__ = [
@@ -196,4 +268,6 @@ __all__ = [
     'tau',
     'column_density_upper',
     'column_density_total_LTE',
+    'convert_N13CO_to_NH2',
+    'convert_NC18O_to_NH2',
 ]
