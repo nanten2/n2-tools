@@ -67,8 +67,8 @@ def mom0(hdu):
     logger.info('(mom0) done')
     
     try:
-        mom0 = (mom0).to('K km / s').value
-        new_bunit = astropy.units.Unit('K km / s')
+        mom0 = (mom0).to(bunit_str + ' km / s').value
+        new_bunit = astropy.units.Unit(bunit_str + ' km / s')
     except:
         mom0 = (mom0).to(new_bunit).value
         pass

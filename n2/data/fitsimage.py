@@ -31,7 +31,7 @@ def open_fits(path, hdu_num=0):
     return fimage
 
 def verify_header(hdu):
-    if hdu.header.get('BUNIT', '') == '':
+    if hdu.header.get('BUNIT', None) == None:
         logger.warning('(verify_header) Empty keyword: BUNIT')
         pass
 
@@ -139,9 +139,15 @@ class fitsimage(object):
         self.header = hdu.header
         self.verify_header()
         self.wcs = astropy.wcs.WCS(hdu)
+
         if self.wcs.naxis > 2:
             self.wcs2 = astropy.wcs.WCS(hdu, naxis=2)
+        else:
+            self.wcs2 = self.wcs
             pass
+
+        self.bunit = astropy.units.Unit(hdu.header.get('BUNIT', ''))        
+        
         if _save_cache:
             self.save_cache()
             pass
@@ -297,6 +303,31 @@ class fitsimage(object):
     @use_cache_if_exists
     def pv(self, sumaxis):
         new_hdu = n2.core.pv(self.hdu, sumaxis)
+        return new_hdu
+    
+    @use_cache_if_exists
+    def tex(self, tau, freq=None, Tbg=2.725*astropy.units.K):
+        new_hdu = n2.core.tex(self.hdu, tau, freq, Tbg)
+        return new_hdu
+    
+    @use_cache_if_exists
+    def tex_optically_thick(self, freq=None, Tbg=2.725*astropy.units.K):
+        new_hdu = n2.core.tex(self.hdu, numpy.inf, freq, Tbg)
+        return new_hdu
+    
+    @use_cache_if_exists
+    def tau(self, tex, freq=None, Tbg=2.725*astropy.units.K):
+        new_hdu = n2.core.tau(self.hdu, tex, freq, Tbg)
+        return new_hdu
+    
+    @use_cache_if_exists
+    def column_density_upper(self, tex, EinsteinA=None, freq=None):
+        new_hdu = n2.core.column_density_upper(self.hdu, tex, EinsteinA, freq)
+        return new_hdu
+    
+    @use_cache_if_exists
+    def column_density_total_LTE(self, Tk, level=None, B=None):
+        new_hdu = n2.core.column_density_total_LTE(self.hdu, Tk, level, B)
         return new_hdu
     
     
