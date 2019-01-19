@@ -229,7 +229,7 @@ def convert_N13CO_to_NH2(hdu, factor='Frerking1982'):
     new_header['BUNIT'] = 'cm-2'
     new_header['PROPERTY'] = 'Column density'
     new_header['MOLECULE'] = 'h2'
-    new_hdu = astropy.io.fits.PrimaryHDU(NH2.to('cm-2'), new_header)
+    new_hdu = astropy.io.fits.PrimaryHDU(NH2, new_header)
     return new_hdu
 
     
@@ -256,7 +256,7 @@ def convert_NC18O_to_NH2(hdu, factor='Frerking1982'):
     new_header['BUNIT'] = 'cm-2'
     new_header['PROPERTY'] = 'Column density'
     new_header['MOLECULE'] = 'h2'
-    new_hdu = astropy.io.fits.PrimaryHDU(NH2.to('cm-2'), new_header)
+    new_hdu = astropy.io.fits.PrimaryHDU(NH2, new_header)
     return new_hdu
 
 

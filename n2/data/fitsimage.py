@@ -306,6 +306,16 @@ class fitsimage(object):
         return new_hdu
     
     @use_cache_if_exists
+    def apply_mask(self, mask):
+        new_hdu = n2.core.apply_mask(self.hdu, mask)
+        return new_hdu
+    
+    @use_cache_if_exists
+    def mask_inpolygon(self, polygon, axis=None):
+        new_hdu = n2.core.mask_inpolygon(self.hdu, polygon)
+        return new_hdu
+    
+    @use_cache_if_exists
     def tex(self, tau, freq=None, Tbg=2.725*astropy.units.K):
         new_hdu = n2.core.tex(self.hdu, tau, freq, Tbg)
         return new_hdu
