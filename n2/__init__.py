@@ -1,5 +1,5 @@
 
-__version__ = '0.0.24'
+__version__ = '0.0.25'
 
 from .data import *
 from .jupyter_tools import *
