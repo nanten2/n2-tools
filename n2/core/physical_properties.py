@@ -260,6 +260,37 @@ def convert_NC18O_to_NH2(hdu, factor='Frerking1982'):
     return new_hdu
 
 
+def convert_to_NH2(hdu, factor='Okamoto2017'):
+    X_Dame2001 = 1.8e20
+    X_Okamoto2017 = 1e20
+    
+    if str(factor).lower()=='dame2001':
+        X = X_Dame2001
+        
+    elif str(factor).lower()=='okamoto2017':
+        X = X_Okamoto2017
+        
+    elif not isinstance(factor, str):
+        X = factor
+
+    else:
+        X = X_Okamoto2017
+        pass
+    
+    logger.info('(convert_to_NH2) factor={factor}'.format(**locals()))
+    logger.debug('(convert_to_NH2) factor={X:.3e}'.format(**locals()))
+    logger.info('(convert_to_NH2) start calculation')    
+    NH2 = hdu.data * X
+    logger.info('(convert_to_NH2) done')
+    
+    new_header = hdu.header.copy()
+    new_header['BUNIT'] = 'cm-2'
+    new_header['PROPERTY'] = 'Column density'
+    new_header['MOLECULE'] = 'h2'
+    new_hdu = astropy.io.fits.PrimaryHDU(NH2, new_header)
+    return new_hdu
+
+
 
 
 
@@ -270,4 +301,5 @@ __all__ = [
     'column_density_total_LTE',
     'convert_N13CO_to_NH2',
     'convert_NC18O_to_NH2',
+    'convert_to_NH2',
 ]
