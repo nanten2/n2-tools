@@ -6,6 +6,7 @@ import numpy
 import astroquery.lamda
 import astropy.units
 import astropy.io.fits
+import astropy.wcs
 
 from numpy import pi
 from numpy import exp
@@ -14,9 +15,12 @@ from numpy import log as ln
 from astropy.constants import k_B
 from astropy.constants import h
 from astropy.constants import c
+from astropy.constants import m_p
 from astropy.units import K
 from astropy.units import GHz
 from astropy.units import s
+from astropy.units import deg
+from astropy.units import sr
 
 
 def parse_line(line):
@@ -124,7 +128,7 @@ def tex(hdu, tau, freq=None, Tbg=None):
     
     new_header = hdu.header.copy()
     new_header['BUNIT'] = 'K'
-    new_hdu = astropy.io.fits.PrimaryHDU(tex.to('K'), new_header)
+    new_hdu = astropy.io.fits.PrimaryHDU(tex.to('K').value, new_header)
     return new_hdu
 
 
@@ -148,7 +152,7 @@ def tau(hdu, Tex, freq=None, Tbg=None):
     
     new_header = hdu.header.copy()
     new_header['BUNIT'] = ''
-    new_hdu = astropy.io.fits.PrimaryHDU(tau.to(''), new_header)
+    new_hdu = astropy.io.fits.PrimaryHDU(tau.to('').value, new_header)
     return new_hdu
 
 
@@ -172,7 +176,7 @@ def column_density_upper(hdu, Tex, EinsteinA=None, freq=None):
     new_header['MOLECULE'] = line['molecule']
     new_header['LEVEL'] = line['up']
     new_header['PROPERTY'] = 'Column density'
-    new_hdu = astropy.io.fits.PrimaryHDU(N_up.to('cm-2'), new_header)
+    new_hdu = astropy.io.fits.PrimaryHDU(N_up.to('cm-2').value, new_header)
     return new_hdu
 
 
@@ -202,7 +206,7 @@ def column_density_total_LTE(hdu, Tk, level=None, B=None):
     new_header['PROPERTY'] = 'Column density'
     new_header['METHOD'] = 'LTE, {0}'.format(hdu.header['LINE'])
     if 'LEVEL' in new_header: del(new_header['LEVEL'])
-    new_hdu = astropy.io.fits.PrimaryHDU(Ntot.to('cm-2'), new_header)
+    new_hdu = astropy.io.fits.PrimaryHDU(Ntot.to('cm-2').value, new_header)
     return new_hdu
 
 
@@ -291,6 +295,39 @@ def convert_to_NH2(hdu, factor='Okamoto2017'):
     return new_hdu
 
 
+def convert_NH2_to_Msun(hdu, distance, uH2=2.72):
+    def get_solid_angle(hdu):
+        wcs = astropy.wcs.WCS(hdu.header)
+        nx = hdu.header['NAXIS1']
+        ny = hdu.header['NAXIS2']  
+        xx = numpy.arange(-0.5, nx, 1)
+        xy = numpy.arange(0, ny, 1)
+        yx = numpy.arange(0, nx, 1)
+        yy = numpy.arange(-0.5, ny, 1)
+        xX, xY = numpy.meshgrid(xx, xy)
+        yX, yY = numpy.meshgrid(yx, yy)
+        xXw, xYw = wcs.all_pix2world(xX, xY, 0)
+        yXw, yYw = wcs.all_pix2world(yX, yY, 0)
+        dXw = xXw[:,1:] - xXw[:,:-1]
+        dYw = yYw[1:] - yYw[:-1]
+        A = abs(dXw * dYw) * deg * deg
+        return A
+        
+    logger.info('(convert_NH2_to_Msun) distance={distance}'.format(**locals()))
+    logger.info('(convert_NH2_to_Msun) uH2={uH2}'.format(**locals()))
+    logger.info('(convert_NH2_to_Msun) start calculation')
+    NH2 = hdu.data * astropy.units.Unit(hdu.header['BUNIT'])
+    area = get_solid_angle(hdu)
+    mass = uH2 * m_p * distance**2 * area.to('sr').value * NH2
+    logger.info('(convert_NH2_to_Msun) done')
+    
+    new_header = hdu.header.copy()
+    new_header['BUNIT'] = 'Msun'
+    new_header['PROPERTY'] = 'Mass'
+    new_header['MOLECULE'] = 'h2'
+    new_hdu = astropy.io.fits.PrimaryHDU(mass.to('Msun').value, new_header)
+    return new_hdu
+
 
 
 
@@ -302,4 +339,5 @@ __all__ = [
     'convert_N13CO_to_NH2',
     'convert_NC18O_to_NH2',
     'convert_to_NH2',
+    'convert_NH2_to_Msun',
 ]

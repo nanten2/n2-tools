@@ -355,6 +355,11 @@ class fitsimage(object):
         new_hdu = n2.core.convert_to_NH2(self.hdu, factor)
         return new_hdu
     
+    @use_cache_if_exists
+    def convert_NH2_to_Msun(self, distance, uH2=2.72):
+        new_hdu = n2.core.convert_NH2_to_Msun(self.hdu, distance, uH2)
+        return new_hdu
+    
     
 
 __all__ = [
